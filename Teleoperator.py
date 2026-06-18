@@ -6,6 +6,10 @@ import mediapipe
 import mediapipe
 from mediapipe.tasks.python import vision, BaseOptions
 from rtde_control import RTDEControlInterface
+from pathlib import Path
+
+
+MODEL_PATH = Path(__file__).parent / "pose_landmarker.task"
 
 pose = {"landmarks": None, "image": None}
 lock = threading.Lock()
@@ -15,7 +19,7 @@ def on_result(result, output_image, timestamp_ms):
         pose["landmarks"] = result.pose_world_landmarks 
         pose["image"] = output_image
 
-base_options = mediapipe.tasks.BaseOptions(model_asset_path = "pose_landmarker.task")
+base_options = mediapipe.tasks.BaseOptions(model_asset_path = str(MODEL_PATH))
 options = vision.PoseLandmarkerOptions(base_options=base_options, running_mode = vision.RunningMode.LIVE_STREAM, result_callback = on_result)
 
 rtde = RTDEControlInterface("localhost")
@@ -56,7 +60,7 @@ smoothed = None         # EMA + step-limit state (full 6-vector)
 ALPHA    = 0.2          # EMA: lower = smoother but laggier
 MAX_STEP = 0.008        # max meters per axis per loop iteration (glitch guard)
 GAIN     = 1.0
-BOX      = [0.22, 0.22, 0.22]
+BOX      = [0.70, 0.7, 0.7]
 WORKSPACE_CENTER = [-0.15, -0.45, 0.30]   # a reachable base-frame point
 
 def wrist_delta(world_landmarks):
