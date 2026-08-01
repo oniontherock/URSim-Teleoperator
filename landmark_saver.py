@@ -1,15 +1,40 @@
 import numpy as np
+from numpy.typing import NDArray
 
-dtype = [('val1', 'f8'), ('val2', 'f8'), ('val3', 'f8'), ('val4', 'i4')]
+dtype = [('x', 'f8'), ('y', 'f8'), ('z', 'f8'), ('ts_grab', 'i8'), ('ts_infer', 'i8'), ('ts_publish', 'i8')]
 
-# 1. Start with a standard, fast Python list instead of a NumPy array
-data_list = [(0.0, 0.0, 0.0, 0)]
 
-def data_point_add(x, y, z, ts):
-    # 2. Appending to a Python list is blindingly fast (O(1) complexity)
-    data_list.append((x, y, z, ts))
+data_list: dict[int, tuple[float, float, float, int, int]] = {}
+
+def data_point_add(x, y, z, ts_grab):
+    data_list[ts_grab] = (-z, x, -y, 0, 0)
+def data_point_infer_time_set(ts_grab, ts_infer):
+    data_list[ts_grab] = (
+        data_list[ts_grab][0],
+        data_list[ts_grab][1],
+        data_list[ts_grab][2],
+        ts_infer, 
+        data_list[ts_grab][4]
+    )
+def data_point_publish_time_set(ts_grab, ts_publish):
+    data_list[ts_grab] = (
+        data_list[ts_grab][0],
+        data_list[ts_grab][1],
+        data_list[ts_grab][2],
+        data_list[ts_grab][3],
+        ts_publish
+    )
 
 def data_save():
-    # 3. Convert the full list to a structured NumPy array all at once right before saving
-    final_array = np.array(data_list, dtype=dtype)
-    np.savetxt("data.txt", final_array, fmt='%.2f', delimiter=', ', header='Col1, Col2, Col3', comments='')
+    formatted_data = [(v[0], v[1], v[2], ts_grab, v[3], v[4]) for ts_grab, v in data_list.items()]
+    
+    final_array: NDArray[np.void] = np.array(formatted_data, dtype=dtype)
+    
+    np.savetxt(
+        "data.txt", 
+        final_array, 
+        fmt=['%.16f', '%.16f', '%.16f', '%d', '%d', '%d'], 
+        delimiter=', ', 
+        header='x, y, z, ts_grab, ts_infer, ts_publish', 
+        comments=''
+    )

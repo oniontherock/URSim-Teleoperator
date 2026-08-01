@@ -7,40 +7,54 @@ import landmark_mapper
 import robot_director
 import landmark_saver
 
-# we need to record the previous timestamp, and only fire the tracker when the timestamp changes.
-# basically, if we just fire whenever, we can get the same position sent bunch of times every frame,
-# because if our control loop is running faster than our mediapipe loop can receive new data, then we will run the control loop with the same stale data.
-# so we only allow the control loop to run the single moment that the mediapipe loop runs/receives new data.
-previous_timestamp = -1
-
 try:
     with landmark_gatherer.vision.PoseLandmarker.create_from_options(landmark_gatherer.options) as landmarker:
 
         robot_director.start()
 
+        frame_index_last = -1
         t0 = time.perf_counter_ns() // 1000000
-        while (opencv_handler.frameCapOk):
+        robot_director.t0 = t0
 
-            frame = opencv_handler.process_frame()
-            if not frame[0]:
-                break
+        while (opencv_handler.cap_good):
 
-            landmark_gatherer.landmark_async_process_from_frame(landmarker, frame[1], (time.perf_counter_ns() // 1000000) - t0)
+            with (opencv_handler.frame_lock):
 
-            landmarks, timestamp = landmark_gatherer.landmarks_get_with_timestamp()
+                if not opencv_handler.cap_good:
+                    break
+                
+                frame = opencv_handler.frame
+                frame_index = opencv_handler.frame_index
+                
+            cv2.imshow("MyWindow", frame) # type: ignore
 
-            if (landmarks) and (previous_timestamp != timestamp):
-                previous_timestamp = timestamp
+            if (frame_index_last == frame_index):
+                continue
+
+
+            frame_index_last = frame_index
+
+            landmark_gatherer.landmark_async_process_from_frame(landmarker, frame, (time.perf_counter_ns() // 1000000) - t0)
+
+            if (landmark_gatherer.landmark_written.is_set()):
+                landmarks, timestamp = landmark_gatherer.landmarks_get_with_timestamp()
+
+                if not landmarks:
+                    continue
+
+
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
-                    landmark_saver.data_point_add(float(wrist_position[0]), float(wrist_position[1]), float(wrist_position[2]), int(timestamp))
+                    landmark_saver.data_point_add(wrist_position[0], wrist_position[1], wrist_position[2], timestamp)
+
+                    landmark_saver.data_point_infer_time_set(timestamp, (time.perf_counter_ns() // 1000000) - t0)
 
                     wrist_position = landmark_processor.filter_wrist_position(wrist_position, timestamp)
                     
                     position_mapped = landmark_mapper.wrist_map_to_robot(wrist_position)
 
-                    robot_director.update_target(position_mapped)
+                    robot_director.update_target(position_mapped, timestamp)
                 
 
             programOk = opencv_handler.finish_frame()

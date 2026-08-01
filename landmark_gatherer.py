@@ -7,11 +7,14 @@ MODEL_PATH = Path(__file__).parent / "pose_landmarker.task"
 
 snapshot = {"landmarks": None, "timestamp": 0}
 landmark_lock = threading.Lock()
+landmark_written = threading.Event()
+landmark_written.clear()
 
 def on_result(result, output_image, timestamp_ms):
     with landmark_lock:
         snapshot["landmarks"] = result.pose_world_landmarks
         snapshot["timestamp"] = timestamp_ms 
+        landmark_written.set()
 
 base_options = mediapipe.tasks.BaseOptions(model_asset_path = str(MODEL_PATH))
 options = vision.PoseLandmarkerOptions(base_options=base_options, running_mode = vision.RunningMode.LIVE_STREAM, result_callback = on_result)
@@ -33,4 +36,5 @@ def landmark_async_process_from_frame(landmarker, frame, timestamp):
 
 def landmarks_get_with_timestamp():
     with landmark_lock:
+        landmark_written.clear()
         return (snapshot["landmarks"], snapshot["timestamp"])
