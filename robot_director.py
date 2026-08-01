@@ -7,14 +7,14 @@ robot_stop_flag = threading.Event()
 robot_ready = threading.Event()
 control_error = None
 
-target = [0, 0.5, 0.5, 0.0, 3.14159, 0.0]
+target = [0, 0.2, 0.6, 0.0, 3.14159, 0.0]
 
 # this is always running asynchronously at the update speed of the robot arm
 def update_arm(robot_ip, stop_event:threading.Event):
 
     global control_error
     try:
-        rtde = RTDEControlInterface(robot_ip)
+        rtde = RTDEControlInterface(robot_ip, frequency=125)
     except Exception as e:
         control_error = e
         robot_ready.set()

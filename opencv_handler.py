@@ -6,10 +6,13 @@ cv2.namedWindow("MyWindow")
 # declare and initialize video capture from default webcame, allows you to read webcam data on demand
 videoCapture = cv2.VideoCapture(0)
 
-frameCapOk, frame = videoCapture.isOpened(), None
+frameCapOk = videoCapture.isOpened()
 
 
 def process_frame() -> tuple[bool, cv2.typing.MatLike]:
+
+    global frameCapOk
+
     # get next frame from webcam
     frameCapOk, frame = videoCapture.read()
 

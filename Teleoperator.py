@@ -5,6 +5,7 @@ import opencv_handler
 import landmark_processor
 import landmark_mapper
 import robot_director
+import landmark_saver
 
 # we need to record the previous timestamp, and only fire the tracker when the timestamp changes.
 # basically, if we just fire whenever, we can get the same position sent bunch of times every frame,
@@ -33,6 +34,8 @@ try:
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
+                    landmark_saver.data_point_add(float(wrist_position[0]), float(wrist_position[1]), float(wrist_position[2]), int(timestamp))
+
                     wrist_position = landmark_processor.filter_wrist_position(wrist_position, timestamp)
                     
                     position_mapped = landmark_mapper.wrist_map_to_robot(wrist_position)
@@ -49,6 +52,7 @@ finally:
 
     opencv_handler.end()
 
+landmark_saver.data_save()
 
 # kill rtde script-to-robot interation
 # print that the program is finished
