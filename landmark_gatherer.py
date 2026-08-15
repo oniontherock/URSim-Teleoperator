@@ -3,7 +3,7 @@ from mediapipe.tasks.python import vision
 from pathlib import Path
 import threading
 
-MODEL_PATH = Path(__file__).parent / "pose_landmarker.task"
+MODEL_PATH = Path(__file__).parent / "pose_landmarker_full.task"
 
 snapshot = {"landmarks": None, "timestamp": 0}
 landmark_lock = threading.Lock()

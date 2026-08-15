@@ -1,44 +1,111 @@
 import cv2
-import numpy as np
 import threading
+import time
+import queue
 
 # create window
-cv2.namedWindow("MyWindow")
+cv2.namedWindow("Teleoperator")
+# get the video path for our video
+video_path = "Videos/hand_held.mp4"
 # declare and initialize video capture from default webcame, allows you to read webcam data on demand
-videoCapture = cv2.VideoCapture(0)
+videoCapture = cv2.VideoCapture(video_path)
 
-cv2.VideoCapture(0, cv2.CAP_DSHOW)
+# if this is true, the frame processor will fully process every single frame in the video, storing them to frame_queue, before any frames are pushed.
+# if this is false, frames will be processed at the same time as they are pushed (note that a single frame is always processed first so that there is a frame to be pushed)
+PROCESS_FRAMES_FIRST = False
 
-videoCapture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-
-frameCapOk, frame, frame_index = videoCapture.isOpened(), None, 0
+frameCapOk, frame = videoCapture.isOpened(), None
 cap_good = frameCapOk
 frame_lock = threading.Lock()
 
-def process_frame():
+allow_frame_pushing = threading.Event()
+allow_frame_pushing.clear()
 
-    global frameCapOk
-    global frame
-    global frame_index
-    global cap_good
+frame_pushed = threading.Event()
+frame_pushed.clear()
+
+frame_queue = queue.Queue(maxsize=(0 if PROCESS_FRAMES_FIRST else 4))
+
+def process_frame():
 
     frameCapOkThreaded, frameThreaded = videoCapture.read()
 
+
+    if not PROCESS_FRAMES_FIRST:
+        allow_frame_pushing.set()
+
     while (frameCapOkThreaded):
 
-        # get next frame from webcam but do it outside the with statement to avoid blocking while waiting for the read
-        frameCapOkThreaded, frameThreaded = videoCapture.read()
+        frameCapOkThreaded, frameThreaded = videoCapture.read()    
 
-        if not frameCapOkThreaded:
+        frame_queue.put((frameCapOkThreaded, frameThreaded))
+
+    if PROCESS_FRAMES_FIRST:
+        allow_frame_pushing.set()
+
+def push_frame():
+
+    allow_frame_pushing.wait()
+
+    global frameCapOk
+    global frame
+    global cap_good
+
+    PERIOD:int = (1e9/30) # 30 fps, in nanoseconds
+    BUFFER_LEN:int = 2e6 # 2ms buffer, in nanoseconds
+
+    frameCapOkThreaded, frameThreaded = frame_queue.get()
+
+    t_ns_start = time.perf_counter_ns()
+    frameCount = 1
+
+    # fps_timer = 0
+    # second_timer_milli = 0
+    # t_ns_prev = 0
+
+    while (frameCapOkThreaded):
+
+        t_ns_now = time.perf_counter_ns()
+
+        t_ns_deadline = t_ns_start + (frameCount * PERIOD)
+
+
+        if (t_ns_now >= t_ns_deadline):
+            pass
+        elif (t_ns_now > (t_ns_deadline - BUFFER_LEN)): # if we are within the buffer, busy wait and then continue the next iteration
             continue
+        else:
+            t_ns_diff  = (t_ns_deadline - t_ns_now) - BUFFER_LEN
+
+            if (t_ns_diff > 0):
+                time.sleep(float(t_ns_diff) / 1e9)
+
+            continue
+
+        while (t_ns_now >= (t_ns_start + (frameCount * PERIOD))):
+            frameCount += 1
+        
+        # second_timer_milli += (t_ns_now - t_ns_prev) // 1000000
+        # t_ns_prev = t_ns_now
+        # fps_timer += 1
+
+        # if (second_timer_milli > 1000):  # Reset the timer every second
+        #     print(f"FPS: {fps_timer}")
+        #     second_timer_milli = 0
+        #     fps_timer = 0
+
+        frameCapOkThreaded, frameThreaded = frame_queue.get()
 
         with frame_lock:
             frameCapOk, frame = frameCapOkThreaded, frameThreaded
-            frame_index += 1
 
-frame_thread = threading.Thread(target=process_frame)
+        frame_pushed.set()
 
-frame_thread.start()
+frame_process_thread = threading.Thread(target=process_frame)
+frame_push_thread = threading.Thread(target=push_frame)
+
+frame_process_thread.start()
+frame_push_thread.start()
 
 # this ends a frame and returns whether the program should continue running, if it's False, the program should end
 def finish_frame():
@@ -48,6 +115,7 @@ def finish_frame():
 
 def end():
     # close window and release webcam VideoCapture device
-    cv2.destroyWindow("MyWindow")
+    cv2.destroyWindow("Teleoperator")
     videoCapture.release()
-    frame_thread.join()
+    frame_process_thread.join()
+    frame_push_thread.join()

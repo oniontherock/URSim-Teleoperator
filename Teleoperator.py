@@ -6,33 +6,33 @@ import landmark_processor
 import landmark_mapper
 import robot_director
 import landmark_saver
+import cv2
 
 try:
     with landmark_gatherer.vision.PoseLandmarker.create_from_options(landmark_gatherer.options) as landmarker:
 
         robot_director.start()
 
-        frame_index_last = -1
         t0 = time.perf_counter_ns() // 1000000
         robot_director.t0 = t0
 
-        while (opencv_handler.cap_good):
+        while (opencv_handler.frameCapOk):
+
+            opencv_handler.frame_pushed.wait()
+            opencv_handler.frame_pushed.clear()
 
             with (opencv_handler.frame_lock):
 
-                if not opencv_handler.cap_good:
+                if not opencv_handler.frameCapOk:
                     break
                 
                 frame = opencv_handler.frame
-                frame_index = opencv_handler.frame_index
-                
-            cv2.imshow("MyWindow", frame) # type: ignore
 
-            if (frame_index_last == frame_index):
-                continue
+            cv2.imshow("Teleoperator", frame)
 
-
-            frame_index_last = frame_index
+            programOk = opencv_handler.finish_frame()
+            if (not programOk):
+                break
 
             landmark_gatherer.landmark_async_process_from_frame(landmarker, frame, (time.perf_counter_ns() // 1000000) - t0)
 
@@ -50,16 +50,12 @@ try:
 
                     landmark_saver.data_point_infer_time_set(timestamp, (time.perf_counter_ns() // 1000000) - t0)
 
-                    wrist_position = landmark_processor.filter_wrist_position(wrist_position, timestamp)
+                    wrist_position = landmark_processor.filter_wrist_position(wrist_position, time.perf_counter_ns() // 1000000)
                     
                     position_mapped = landmark_mapper.wrist_map_to_robot(wrist_position)
 
                     robot_director.update_target(position_mapped, timestamp)
                 
-
-            programOk = opencv_handler.finish_frame()
-            if (not programOk):
-                break
 finally:
 
     robot_director.end()

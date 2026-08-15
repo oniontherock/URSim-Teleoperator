@@ -43,7 +43,13 @@ def update_arm(robot_ip, stop_event:threading.Event):
                 landmark_saver.data_point_publish_time_set(tsg, (time.perf_counter_ns() // 1000000) - t0)
                 ts_grab_last = tsg
 
-            rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/125, 0.03, 500)
+
+
+            # if (tsg <= 1000):
+            #     home = [0, -math.pi/2, math.pi/2, -math.pi/2, -math.pi/2, 0]
+            #     rtde.moveJ(home, 1.0, 0.5)
+            # else:
+                rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/125, 0.03, 500)
 
 
             rtde.waitPeriod(start_time)
