@@ -52,7 +52,7 @@ def update_arm(robot_ip, stop_event:threading.Event):
             #     home = [0, -math.pi/2, math.pi/2, -math.pi/2, -math.pi/2, 0]
             #     rtde.moveJ(home, 1.0, 0.5)
             # else:
-                rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/125, 0.03, 500)
+            rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/125, 0.03, 500)
 
 
             rtde.waitPeriod(start_time)
