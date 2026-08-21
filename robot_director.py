@@ -10,8 +10,7 @@ robot_ready = threading.Event()
 control_error = None
 
 target = [0, 0.2, 0.6, 0.0, 3.14159, 0.0]
-ts_grab = 0
-ts_grab_last = 0
+data_ind = -1
 t0 = 0
 
 # this is always running asynchronously at the update speed of the robot arm
@@ -29,6 +28,8 @@ def update_arm(robot_ip, stop_event:threading.Event):
     
     robot_ready.set()
 
+    data_ind_last = -1
+
     try:
         while not stop_event.is_set():
 
@@ -36,12 +37,14 @@ def update_arm(robot_ip, stop_event:threading.Event):
 
             with (position_lock):
                 tcp_pose = list(target)
-                tsg = ts_grab
+                data_ind_threaded = data_ind
             
+            if (data_ind_threaded != data_ind_last):
+                data_tracker.data_element_add("pos_ts", data_ind_threaded, "ts_publish", (time.perf_counter_ns() // 1000000) - t0)
+                data_tracker.data_element_add("pos_ts", data_ind_threaded, "data_ind_write", data_ind_threaded)
+                data_tracker.data_report("pos_ts", data_ind_threaded)
+                data_ind_last = data_ind_threaded
 
-            if (tsg != 0) and (tsg != ts_grab_last):
-                # data_tracker.data_element_add("Data", (time.perf_counter_ns() // 1000000) - t0)
-                ts_grab_last = tsg
 
 
 
@@ -63,12 +66,12 @@ def update_arm(robot_ip, stop_event:threading.Event):
 
     return
 # this is called to update the target used in update_arm
-def update_target(target_new, ts_grab_new):
+def update_target(target_new, data_ind_new):
     global target
-    global ts_grab
+    global data_ind
     with (position_lock):
         target = list(target_new)
-        ts_grab = ts_grab_new
+        data_ind = data_ind_new
 
 control_ip = "localhost"
 control_thread = threading.Thread()

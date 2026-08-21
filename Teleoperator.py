@@ -48,23 +48,27 @@ try:
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
-                    data_tracker.data_element_add_group("pos_ts", ['x', 'y', 'z', 'ts_grab'], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
+                    data_ind = data_tracker.data_dict_init("pos_ts")
 
-                    data_tracker.data_element_add("pos_ts", 'ts_infer', (time.perf_counter_ns() // 1000000) - t0)
+                    data_tracker.data_element_add_group("pos_ts", data_ind, ['x', 'y', 'z', "ts_grab"], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
 
-                    data_tracker.data_log("pos_ts")
+                    data_tracker.data_element_add("pos_ts", data_ind, "ts_infer", (time.perf_counter_ns() // 1000000) - t0)
+
+                    data_tracker.data_element_add("pos_ts", data_ind, "data_ind_grab", data_ind)
 
                     wrist_position = landmark_processor.filter_wrist_position(wrist_position, time.perf_counter_ns() // 1000000)
                     
                     position_mapped = landmark_mapper.wrist_map_to_robot(wrist_position)
 
-                    robot_director.update_target(position_mapped, timestamp)
-                
+                    robot_director.update_target(position_mapped, data_ind)
+            data_tracker.data_log_next() # here we process a single data_report. We technically could wait until the program is fully finished running. But we do it here so we don't have a massive queue at the end of the program (especially for large files). If performance is absolutely critical this line can be removed (unlikely to change performance in a significant way though)
 finally:
 
     robot_director.end()
 
     opencv_handler.end()
+
+data_tracker.data_log_force_process_all()
 
 data = data_tracker.data_format("pos_ts")
 

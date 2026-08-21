@@ -2,33 +2,64 @@
 # if this file was the only one, no data would be preserved outside of the current instance of the program.
 import numpy as np
 from numpy.typing import NDArray
+import queue
+import time
 
-dtype = [('x', 'f8'), ('y', 'f8'), ('z', 'f8'), ('ts_grab', 'i8'), ('ts_infer', 'i8')]
+# Architecture note (SUPER IMPORTANT).
+# the way this all works is that a new piece is created under a name, let's call it ts.
+# a new data_availability_set is created, 5 new data_dicts are created,
+# a data array is created, and a data_type_dict and data_format_dict are created, all of which are under the name ts.
 
-data_list: dict[int, tuple[float, float, float, int, int]] = {}
-
-
-data_dict = {} # example of setting an element: data_dict[name][element_name] = element_value
-data_array = {}
+data_availability_sets = {} 
+data_dicts = {} # array of dictionaries.
+data_array = {} # dictionary of arrays
 data_type_dict = {}
 data_format_dict = {}
 
+data_log_queue = queue.Queue() # every time a piece of data is marked to be logged, it's added to a queue under this structure ("name", index:int), index is an integer. It is then processed in order.
 
-# appends a new element to data_type_dict under the given name, with the value being a unique data type, this is used for formatting and saving later
+# appends new data under the given name, with the value being a unique data type, this is used for formatting and saving later
 def data_structure_add(name, data_type, data_format):
     data_type_dict[name] = data_type
     data_format_dict[name] = data_format
     data_array[name] = []
-    data_dict[name] = {}
-def data_element_add(name, element_name, element_value):
-    data_dict[name][element_name] = element_value
-def data_element_add_group(name, element_name, element_value):
-    for name_cur, value_cur in zip(element_name, element_value):
-        data_dict[name][name_cur] = value_cur
-# please note that when you call this function, the data you've been logging MUST be complete (I.E. fully populated to match the data_type you assigned). If it's not, an error will be thrown.
-def data_log(name):
-    data_array[name].append(data_dict[name].copy())
+    data_dicts[name] = [{} for _ in range(5)]
+    data_availability_sets[name] = {0, 1, 2, 3, 4}
 
+def data_dict_init(name) -> int:
+    data_ind = -1
+
+    slots = data_availability_sets[name] # KeyError here means "no such name"
+
+    try:
+        data_ind = slots.pop()
+    except KeyError:
+        raise KeyError(f"RAN OUT OF DATA SLOTS: dict_name = {name}") from None
+
+    return data_ind
+def data_dict_kill(name, index):
+    data_availability_sets[name].add(index)
+def data_element_add(name, index, element_name, element_value):
+    data_dicts[name][index][element_name] = element_value
+def data_element_add_group(name, index, element_name, element_value):
+    for name_cur, value_cur in zip(element_name, element_value):
+        data_dicts[name][index][name_cur] = value_cur
+# please note that when you call this function, the data you've been logging MUST be complete (I.E. fully populated to match the data_type you assigned). If it's not, an error will be thrown.
+def data_report(name, index):
+    data_log_queue.put((name, index))
+    data_dict_kill(name, index)
+# logs/processes the next data element that's ready to be served up
+def data_log_next():
+
+    if data_log_queue.empty():
+        return
+    
+    name, index = data_log_queue.get()
+    
+    data_array[name].append(data_dicts[name][index].copy())
+def data_log_force_process_all():
+    while not data_log_queue.empty():
+        data_log_next()
 def data_format(name):
 
     data_format = data_format_dict[name]
