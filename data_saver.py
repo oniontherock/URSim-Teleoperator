@@ -3,10 +3,21 @@
 import numpy as np
 from numpy.typing import NDArray
 import string
+from datetime import datetime
+import pathlib
 
 def data_save_singular(file_name, formatted_data, data_format, data_header):
+
+    date = datetime.now()
+
+    formatted_date = date.strftime("%Y_%m_%d__%Hh%Mm%Ss")
+
+    file_name_with_date = file_name + "__" + formatted_date
+
+    formatted_name = file_name_with_date + ".txt"
+    
     np.savetxt(
-        file_name,
+        "Data/" + formatted_name,
         formatted_data, 
         fmt=data_format, 
         delimiter=', ', 

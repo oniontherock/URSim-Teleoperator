@@ -72,7 +72,7 @@ data_tracker.data_log_force_process_all()
 
 data = data_tracker.data_format("pos_ts")
 
-data_saver.data_save_singular("pos_ts.txt", data["data"], data["format"], data["header"])
+data_saver.data_save_singular("pos_ts", data["data"], data["format"], data["header"])
 
 # kill rtde script-to-robot interation
 # print that the program is finished
