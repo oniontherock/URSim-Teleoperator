@@ -41,7 +41,6 @@ def update_arm(robot_ip, stop_event:threading.Event):
             
             if (data_ind_threaded != data_ind_last):
                 data_tracker.data_element_add("pos_ts", data_ind_threaded, "ts_publish", (time.perf_counter_ns() // 1000000) - t0)
-                data_tracker.data_element_add("pos_ts", data_ind_threaded, "data_ind_write", data_ind_threaded)
                 data_tracker.data_report("pos_ts", data_ind_threaded)
                 data_ind_last = data_ind_threaded
 

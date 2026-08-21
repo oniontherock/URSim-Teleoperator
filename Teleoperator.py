@@ -54,7 +54,7 @@ try:
 
                     data_tracker.data_element_add("pos_ts", data_ind, "ts_infer", (time.perf_counter_ns() // 1000000) - t0)
 
-                    data_tracker.data_element_add("pos_ts", data_ind, "data_ind_grab", data_ind)
+
 
                     wrist_position = landmark_processor.filter_wrist_position(wrist_position, time.perf_counter_ns() // 1000000)
                     
