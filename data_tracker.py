@@ -47,8 +47,8 @@ def data_format(name):
 
         tuple = ()
 
-        for data_element_cur in data_dict_cur:
-            tuple += (data_dict_cur[data_element_cur],)
+        for data_element_cur in data_type:
+            tuple += (data_dict_cur[data_element_cur[0]],)
         formatted_data.append(tuple)
 
 
