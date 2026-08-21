@@ -5,7 +5,9 @@ import opencv_handler
 import landmark_processor
 import landmark_mapper
 import robot_director
-import landmark_saver
+import data_structures
+import data_tracker
+import data_saver
 import cv2
 
 try:
@@ -46,9 +48,11 @@ try:
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
-                    landmark_saver.data_point_add(wrist_position[0], wrist_position[1], wrist_position[2], timestamp)
+                    data_tracker.data_element_add_group("pos_ts", ['x', 'y', 'z', 'ts_grab'], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
 
-                    landmark_saver.data_point_infer_time_set(timestamp, (time.perf_counter_ns() // 1000000) - t0)
+                    data_tracker.data_element_add("pos_ts", 'ts_infer', (time.perf_counter_ns() // 1000000) - t0)
+
+                    data_tracker.data_log("pos_ts")
 
                     wrist_position = landmark_processor.filter_wrist_position(wrist_position, time.perf_counter_ns() // 1000000)
                     
@@ -62,7 +66,9 @@ finally:
 
     opencv_handler.end()
 
-landmark_saver.data_save()
+data = data_tracker.data_format("pos_ts")
+
+data_saver.data_save_singular("pos_ts.txt", data["data"], data["format"], data["header"])
 
 # kill rtde script-to-robot interation
 # print that the program is finished

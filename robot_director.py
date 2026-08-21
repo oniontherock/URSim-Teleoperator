@@ -1,5 +1,5 @@
 import threading
-import landmark_saver
+import data_tracker
 import time
 from rtde_control import RTDEControlInterface
 
@@ -40,7 +40,7 @@ def update_arm(robot_ip, stop_event:threading.Event):
             
 
             if (tsg != 0) and (tsg != ts_grab_last):
-                landmark_saver.data_point_publish_time_set(tsg, (time.perf_counter_ns() // 1000000) - t0)
+                # data_tracker.data_element_add("Data", (time.perf_counter_ns() // 1000000) - t0)
                 ts_grab_last = tsg
 
 
