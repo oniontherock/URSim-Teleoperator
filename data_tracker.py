@@ -3,7 +3,6 @@
 import numpy as np
 from numpy.typing import NDArray
 import queue
-import time
 
 # Architecture note (SUPER IMPORTANT).
 # the way this all works is that a new piece is created under a name, let's call it ts.
