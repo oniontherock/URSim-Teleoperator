@@ -23,8 +23,8 @@ def data_structure_add(name, data_type, data_format):
     data_type_dict[name] = data_type
     data_format_dict[name] = data_format
     data_array[name] = []
-    data_dicts[name] = [{} for _ in range(5)]
-    data_availability_sets[name] = {0, 1, 2, 3, 4}
+    data_dicts[name] = [{} for _ in range(16)]
+    data_availability_sets[name] = {0, 1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15}
 
 def data_dict_init(name) -> int:
     data_ind = -1
@@ -41,8 +41,8 @@ def data_dict_kill(name, index):
     data_availability_sets[name].add(index)
 def data_element_add(name, index, element_name, element_value):
     data_dicts[name][index][element_name] = element_value
-def data_element_add_group(name, index, element_name, element_value):
-    for name_cur, value_cur in zip(element_name, element_value):
+def data_element_add_group(name, index, element_names, element_values):
+    for name_cur, value_cur in zip(element_names, element_values):
         data_dicts[name][index][name_cur] = value_cur
 # please note that when you call this function, the data you've been logging MUST be complete (I.E. fully populated to match the data_type you assigned). If it's not, an error will be thrown.
 def data_report(name, index):
@@ -60,6 +60,11 @@ def data_log_next():
 def data_log_force_process_all():
     while not data_log_queue.empty():
         data_log_next()
+def data_quick_write(name, element_names, element_values):
+    index = data_dict_init(name)
+    data_element_add_group(name, index, element_names, element_values)
+    data_report(name, index)
+
 def data_format(name):
 
     data_format = data_format_dict[name]
