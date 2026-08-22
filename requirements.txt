@@ -10,12 +10,10 @@ matplotlib==3.11.0
 mediapipe==0.10.35
 numpy==2.4.6
 opencv_contrib_python==4.13.0.92
-opencv_python==4.13.0.92
 packaging==26.2
 pillow==12.2.0
 pycparser==3.0
 pyparsing==3.3.2
 python_dateutil==2.9.0.post0
 six==1.17.0
-sounddevice==0.5.5
 ur_rtde==1.6.3
