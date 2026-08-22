@@ -2,6 +2,7 @@ import threading
 import data_tracker
 import time
 from rtde_control import RTDEControlInterface
+from rtde_receive import RTDEReceiveInterface
 
 position_lock = threading.Lock()
 robot_stop_flag = threading.Event()
@@ -25,6 +26,12 @@ def update_arm(robot_ip, stop_event:threading.Event):
         control_error = e
         robot_ready.set()
         return
+    try:
+        rtde_receive = RTDEReceiveInterface(robot_ip, frequency=125)
+    except Exception as e:
+        control_error = e
+        robot_ready.set()
+        return
     
     robot_ready.set()
 
@@ -40,8 +47,8 @@ def update_arm(robot_ip, stop_event:threading.Event):
                 data_ind_threaded = data_ind
             
             if (data_ind_threaded != data_ind_last):
-                data_tracker.data_element_add("pos_ts", data_ind_threaded, "ts_publish", (time.perf_counter_ns() // 1000000) - t0)
-                data_tracker.data_report("pos_ts", data_ind_threaded)
+                data_tracker.data_element_add("timestamps", data_ind_threaded, "t_published", (time.perf_counter_ns() // 1000000) - t0)
+                data_tracker.data_report("timestamps", data_ind_threaded)
                 data_ind_last = data_ind_threaded
 
 
@@ -52,6 +59,9 @@ def update_arm(robot_ip, stop_event:threading.Event):
             #     rtde.moveJ(home, 1.0, 0.5)
             # else:
             rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/125, 0.03, 500)
+
+            robot_tcp = rtde_receive.getActualTCPPose()
+            data_tracker.data_quick_write("robot_tcp_position", ['x', 'y', 'z', 't_write'], [robot_tcp[0], robot_tcp[1], robot_tcp[2], (time.perf_counter_ns() // 1000000) - t0])
 
 
             rtde.waitPeriod(start_time)

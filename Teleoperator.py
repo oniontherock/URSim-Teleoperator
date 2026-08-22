@@ -5,7 +5,7 @@ import opencv_handler
 import landmark_processor
 import landmark_mapper
 import robot_director
-import data_structures
+import data_format
 import data_tracker
 import data_saver
 import cv2
@@ -48,17 +48,15 @@ try:
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
-                    data_ind = data_tracker.data_dict_init("pos_ts")
+                    data_ind = data_tracker.data_dict_init("timestamps")
+                    data_tracker.data_element_add_group("timestamps", data_ind, ['t_obtained', 't_used'], [timestamp, (time.perf_counter_ns() // 1000000) - t0])
+                    data_tracker.data_quick_write("pre_filter_position", ['x', 'y', 'z', 't_write'], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
 
-                    data_tracker.data_element_add_group("pos_ts", data_ind, ['x', 'y', 'z', "ts_grab"], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
-
-                    data_tracker.data_element_add("pos_ts", data_ind, "ts_infer", (time.perf_counter_ns() // 1000000) - t0)
-
-
-
-                    wrist_position = landmark_processor.filter_wrist_position(wrist_position, time.perf_counter_ns() // 1000000)
-                    
+                    wrist_position = landmark_processor.filter_wrist_position(wrist_position, (time.perf_counter_ns() // 1000000) - t0)
+                    data_tracker.data_quick_write("post_filter_position", ['x', 'y', 'z', 't_write'], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
                     position_mapped = landmark_mapper.wrist_map_to_robot(wrist_position)
+
+                    data_tracker.data_element_add("timestamps", data_ind, "t_processed", (time.perf_counter_ns() // 1000000) - t0)
 
                     robot_director.update_target(position_mapped, data_ind)
             data_tracker.data_log_next() # here we process a single data_report. We technically could wait until the program is fully finished running. But we do it here so we don't have a massive queue at the end of the program (especially for large files). If performance is absolutely critical this line can be removed (unlikely to change performance in a significant way though)
@@ -68,12 +66,8 @@ finally:
 
     opencv_handler.end()
 
-data_tracker.data_log_force_process_all()
+# this code only runs on successful execution of the program. If an error occurs these remaining lines won't run. If something MUST run put in in the "finally" above
 
-data = data_tracker.data_format("pos_ts")
+data_format.data_finalize()
 
-data_saver.data_save_singular("pos_ts", data["data"], data["format"], data["header"])
-
-# kill rtde script-to-robot interation
-# print that the program is finished
 print("Program End")
