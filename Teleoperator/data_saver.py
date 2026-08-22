@@ -2,6 +2,11 @@
 # if this file was the only one, no data would be preserved outside of the current instance of the program.
 import numpy as np
 from datetime import datetime
+from pathlib import Path
+
+# make sure the Data folder exists before trying to save data to it with data_save_singular(...)
+DATA_DIR = Path(__file__).resolve().parent.parent / "Data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 def data_save_singular(file_name, formatted_data, data_format, data_header):
 
