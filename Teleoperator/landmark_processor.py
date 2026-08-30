@@ -1,6 +1,6 @@
 import filtering
 
-low_pass = filtering.LowPass(0.25)
+low_pass = filtering.LowPass(100)
 
 def filter_wrist_position(wrist_position, timestamp):
     return low_pass.filter_value(wrist_position, timestamp)
