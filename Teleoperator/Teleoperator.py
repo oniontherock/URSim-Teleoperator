@@ -46,8 +46,12 @@ try:
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
+                    frame_counter = 0
+                    with opencv_handler.frame_counter_lock:
+                        frame_counter = opencv_handler.frame_counter
+
                     data_ind = data_tracker.data_dict_init("timestamps")
-                    data_tracker.data_element_add_group("timestamps", data_ind, ['t_obtained', 't_used'], [timestamp, (time.perf_counter_ns() // 1000000) - t0])
+                    data_tracker.data_element_add_group("timestamps", data_ind, ['t_obtained', 't_used', 'frame_used'], [timestamp, (time.perf_counter_ns() // 1000000) - t0, frame_counter])
                     data_tracker.data_quick_write("pre_filter_position", ['x', 'y', 'z', 't_write'], [wrist_position[0], wrist_position[1], wrist_position[2], timestamp])
 
                     wrist_position = landmark_processor.filter_wrist_position(wrist_position, (time.perf_counter_ns() // 1000000) - t0)

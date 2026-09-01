@@ -7,9 +7,11 @@ data_tracker.data_structure_add(
         ('t_obtained', 'i8'),
         ('t_used', 'i8'),
         ('t_processed', 'i8'),
-        ('t_published', 'i8')
+        ('t_published', 'i8'),
+        ('frame_used', 'i8')
     ],
     [
+        '%d',
         '%d',
         '%d',
         '%d',

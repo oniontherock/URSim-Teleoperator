@@ -24,7 +24,11 @@ allow_frame_pushing.clear()
 frame_pushed = threading.Event()
 frame_pushed.clear()
 
+frame_counter = 0
+frame_counter_lock = threading.Lock()
+
 frame_queue = queue.Queue(maxsize=(0 if PROCESS_FRAMES_FIRST else 4))
+
 
 def process_frame():
 
@@ -50,6 +54,7 @@ def push_frame():
     global frameCapOk
     global frame
     global cap_good
+    global frame_counter
 
     PERIOD:int = (1e9/30) # 30 fps, in nanoseconds
     BUFFER_LEN:int = 2e6 # 2ms buffer, in nanoseconds
@@ -98,6 +103,8 @@ def push_frame():
 
         with frame_lock:
             frameCapOk, frame = frameCapOkThreaded, frameThreaded
+        with frame_counter_lock:
+            frame_counter += 1
 
         frame_pushed.set()
 
