@@ -22,7 +22,7 @@ def data_save_singular(file_name, formatted_data, data_format, data_header):
         "Data/" + formatted_name,
         formatted_data, 
         fmt=data_format, 
-        delimiter=', ', 
+        delimiter=',', 
         header=data_header, 
         comments=''
     )
