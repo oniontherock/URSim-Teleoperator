@@ -21,13 +21,13 @@ def update_arm(robot_ip, stop_event:threading.Event):
     global ts_grab_last
 
     try:
-        rtde = RTDEControlInterface(robot_ip, frequency=125)
+        rtde = RTDEControlInterface(robot_ip)
     except Exception as e:
         control_error = e
         robot_ready.set()
         return
     try:
-        rtde_receive = RTDEReceiveInterface(robot_ip, frequency=125)
+        rtde_receive = RTDEReceiveInterface(robot_ip)
     except Exception as e:
         control_error = e
         robot_ready.set()
@@ -58,7 +58,7 @@ def update_arm(robot_ip, stop_event:threading.Event):
             #     home = [0, -math.pi/2, math.pi/2, -math.pi/2, -math.pi/2, 0]
             #     rtde.moveJ(home, 1.0, 0.5)
             # else:
-            rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/125, 0.03, 500)
+            rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/500, 0.03, 300)
 
             robot_tcp = rtde_receive.getActualTCPPose()
             data_tracker.data_quick_write("robot_tcp_position", ['x', 'y', 'z', 't_write'], [robot_tcp[0], robot_tcp[1], robot_tcp[2], (time.perf_counter_ns() // 1000000) - t0])
