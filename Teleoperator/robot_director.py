@@ -10,7 +10,7 @@ robot_stop_flag = threading.Event()
 robot_ready = threading.Event()
 control_error = None
 
-target = [0, 0.2, 0.6, 0.0, 3.14159, 0.0]
+target = [0.2, -0.2, 0.6, 0.0, 3.14159, 0.0]
 data_ind = -1
 t0 = 0
 
