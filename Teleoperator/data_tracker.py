@@ -3,13 +3,16 @@
 import numpy as np
 from numpy.typing import NDArray
 import queue
+from threading import Event
 
 # Architecture note (SUPER IMPORTANT).
 # the way this all works is that a new piece is created under a name, let's call it ts.
 # a new data_availability_set is created, 5 new data_dicts are created,
 # a data array is created, and a data_type_dict and data_format_dict are created, all of which are under the name ts.
 
-data_availability_sets = {} 
+data_availability_queue_empty = Event()
+
+data_availability_queue = {}
 data_dicts = {} # array of dictionaries.
 data_array = {} # dictionary of arrays
 data_type_dict = {}
@@ -22,22 +25,25 @@ def data_structure_add(name, data_type, data_format):
     data_type_dict[name] = data_type
     data_format_dict[name] = data_format
     data_array[name] = []
-    data_dicts[name] = [{} for _ in range(16)]
-    data_availability_sets[name] = {0, 1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15}
+    data_dicts[name] = [{} for _ in range(512)]
+    data_availability_queue[name] = queue.Queue()
+    for i in range(512):
+        data_availability_queue[name].put(i)
 
 def data_dict_init(name) -> int:
     data_ind = -1
 
-    slots = data_availability_sets[name] # KeyError here means "no such name"
+    slots = data_availability_queue[name] # KeyError here means "no such name"
 
     try:
-        data_ind = slots.pop()
-    except KeyError:
-        raise KeyError(f"RAN OUT OF DATA SLOTS: dict_name = {name}") from None
+        data_ind = slots.get_nowait()
+    except queue.Empty:
+        data_availability_queue_empty.set()
+        raise KeyError(f"RAN OUT OF DATA SLOTS: dict_name = {name}")
 
     return data_ind
 def data_dict_kill(name, index):
-    data_availability_sets[name].add(index)
+    data_availability_queue[name].put(index)
 def data_element_add(name, index, element_name, element_value):
     data_dicts[name][index][element_name] = element_value
 def data_element_add_group(name, index, element_names, element_values):
@@ -46,7 +52,6 @@ def data_element_add_group(name, index, element_names, element_values):
 # please note that when you call this function, the data you've been logging MUST be complete (I.E. fully populated to match the data_type you assigned). If it's not, an error will be thrown.
 def data_report(name, index):
     data_log_queue.put((name, index))
-    data_dict_kill(name, index)
 # logs/processes the next data element that's ready to be served up
 def data_log_next():
 
@@ -56,6 +61,9 @@ def data_log_next():
     name, index = data_log_queue.get()
     
     data_array[name].append(data_dicts[name][index].copy())
+
+    data_dict_kill(name, index)
+
 def data_log_force_process_all():
     while not data_log_queue.empty():
         data_log_next()
@@ -87,9 +95,9 @@ def data_format(name):
         formatted_data.append(tuple)
 
 
-    formatted_data: NDArray[np.void] = np.array(formatted_data, dtype=data_type)
+    final_data: NDArray[np.void] = np.array(formatted_data, dtype=data_type)
 
-    return {"data":formatted_data, "format":data_format, "header":data_header}
+    return {"data":final_data, "format":data_format, "header":data_header}
 
 ### example usage of the data tracker system below (please note this incorporates functions from both data_tracker.py AND data_saver.py):
 # data_structure_add("pos", [('x', 'f8'), ('y', 'f8'), ('z', 'f8')], ['%.16f', '%.16f', '%.16f'])

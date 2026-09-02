@@ -21,6 +21,9 @@ try:
             opencv_handler.frame_pushed.wait()
             opencv_handler.frame_pushed.clear()
 
+            if (data_tracker.data_availability_queue_empty.is_set()):
+                sys.exit(f"Data availability queue is empty. Exiting program.")
+
             with (opencv_handler.frame_lock):
 
                 if not opencv_handler.frameCapOk:
