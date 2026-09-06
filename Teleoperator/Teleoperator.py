@@ -7,6 +7,8 @@ import robot_director
 import data_format
 import data_tracker
 import cv2
+import TCP_samplers
+import sys
 
 try:
     with landmark_gatherer.vision.PoseLandmarker.create_from_options(landmark_gatherer.options) as landmarker:
@@ -15,6 +17,9 @@ try:
 
         t0 = time.perf_counter_ns() // 1000000
         robot_director.t0 = t0
+        TCP_samplers.t0 = t0
+
+        TCP_samplers.start_all_threads()
 
         while (opencv_handler.frameCapOk):
 
@@ -68,17 +73,18 @@ try:
             while True:
                 data_tracker.data_log_next() # here we process a single data_report. We technically could wait until the program is fully finished running. But we do it here so we don't have a massive queue at the end of the program (especially for large files). If performance is absolutely critical this line can be removed (unlikely to change performance in a significant way though)
 
-                if data_tracker.data_log_queue.qsize() <= 6:
+                if data_tracker.data_log_queue.qsize() <= 0:
                     break
 
 finally:
+
+    TCP_samplers.kill_all_threads()
 
     robot_director.end()
 
     opencv_handler.end()
 
 # this code only runs on successful execution of the program. If an error occurs these remaining lines won't run. If something MUST run put in in the "finally" above
-
 data_format.data_finalize()
 
 print("Program End")
