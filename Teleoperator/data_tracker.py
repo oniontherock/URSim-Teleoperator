@@ -25,9 +25,9 @@ def data_structure_add(name, data_type, data_format):
     data_type_dict[name] = data_type
     data_format_dict[name] = data_format
     data_array[name] = []
-    data_dicts[name] = [{} for _ in range(512)]
+    data_dicts[name] = [{} for _ in range(2048)]
     data_availability_queue[name] = queue.Queue()
-    for i in range(512):
+    for i in range(2048):
         data_availability_queue[name].put(i)
 
 def data_dict_init(name) -> int:
