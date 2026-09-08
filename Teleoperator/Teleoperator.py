@@ -23,6 +23,9 @@ try:
 
         while (opencv_handler.frameCapOk):
 
+            with TCP_samplers.int_lock:
+                TCP_samplers.test_int += 1
+
             opencv_handler.frame_pushed.wait()
             opencv_handler.frame_pushed.clear()
 
