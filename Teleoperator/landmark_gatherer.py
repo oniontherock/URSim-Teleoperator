@@ -22,12 +22,12 @@ options = vision.PoseLandmarkerOptions(base_options=base_options, running_mode =
 # wrist ID in mediapipe is 16
 WRIST_ID = 16
 
-VIS_THRESHOLD = 0.5
+VIS_THRESHOLD = 0.1
 
 def wrist_position_get(world_landmarks):
     wrist = world_landmarks[0][WRIST_ID]
     if wrist.visibility < VIS_THRESHOLD:
-        return None
+        raise Exception(f"NOT ENOUGH VISIBLITY ON HAND! PLEASE SELECT DIFFERENT VIDEO")
     return [wrist.x, wrist.y, wrist.z]
 
 def landmark_async_process_from_frame(landmarker, frame, timestamp):
