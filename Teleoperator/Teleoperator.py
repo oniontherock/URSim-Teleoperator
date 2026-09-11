@@ -38,15 +38,7 @@ try:
             if (not programOk):
                 break
 
-            ts0 = 0
-            ts1 = 0
-            ts2 = 0
-            ts3 = 0
-
             landmark_gatherer.landmark_async_process_from_frame(landmarker, frame, (time.perf_counter_ns() // 1000000) - t0)
-
-            # ts0 = time.perf_counter_ns()
-
 
             if (landmark_gatherer.landmark_written.is_set()):
                 # ts1 = time.perf_counter_ns()
@@ -58,7 +50,6 @@ try:
                 wrist_position = landmark_gatherer.wrist_position_get(landmarks)
                 if wrist_position is not None:
 
-                    # ts2 = time.perf_counter_ns()
                     frame_counter = 0
                     
                     with opencv_handler.frame_counter_lock:
@@ -75,15 +66,6 @@ try:
                     data_tracker.data_element_add("timestamps", data_ind, "t_processed", (time.perf_counter_ns() // 1000000) - t0)
 
                     robot_director.update_target(position_mapped, data_ind)
-                    # ts3 = time.perf_counter_ns()
-                    # right_now = time.perf_counter_ns()
-
-                    # td0 = right_now - ts0
-                    # td1 = right_now - ts1
-                    # td2 = right_now - ts2
-                    # td3 = right_now - ts3
-
-                    # print(f"{(time.perf_counter_ns()-ts3):9d} | {(ts3-ts2):9d} | {(ts2-ts1):9d} | {(ts1-ts0):9d} | {time.perf_counter_ns()-ts0} | {frame_counter}")
 
             while True:
                 data_tracker.data_log_next() # here we process a single data_report. We technically could wait until the program is fully finished running. But we do it here so we don't have a massive queue at the end of the program (especially for large files). If performance is absolutely critical this line can be removed (unlikely to change performance in a significant way though)
