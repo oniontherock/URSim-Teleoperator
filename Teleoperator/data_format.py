@@ -167,8 +167,6 @@ def data_save(name):
     data_saver.data_save_singular(name, data["data"], data["format"], data["header"])
 
 def data_finalize():
-    data_tracker.data_log_force_process_all()
-
 
     data_save("sampler1")
     data_save("sampler2")

@@ -13,6 +13,7 @@ import sys
 try:
     with landmark_gatherer.vision.PoseLandmarker.create_from_options(landmark_gatherer.options) as landmarker:
 
+        data_tracker.logging_start()
         robot_director.start()
 
         t0 = time.perf_counter_ns() // 1000000
@@ -70,17 +71,13 @@ try:
 
                     robot_director.update_target(position_mapped, data_ind)
 
-            while True:
-                data_tracker.data_log_next() # here we process a single data_report. We technically could wait until the program is fully finished running. But we do it here so we don't have a massive queue at the end of the program (especially for large files). If performance is absolutely critical this line can be removed (unlikely to change performance in a significant way though)
-
-                if data_tracker.data_log_queue.qsize() <= 0:
-                    break
 
 finally:
 
     TCP_samplers.kill_all_threads()
 
     robot_director.end()
+    data_tracker.logging_end()
 
     opencv_handler.end()
 
