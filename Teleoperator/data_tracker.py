@@ -3,14 +3,14 @@
 import numpy as np
 from numpy.typing import NDArray
 import queue
-from threading import Event
+import threading
 
 # Architecture note (SUPER IMPORTANT).
 # the way this all works is that a new piece is created under a name, let's call it ts.
 # a new data_availability_set is created, 5 new data_dicts are created,
 # a data array is created, and a data_type_dict and data_format_dict are created, all of which are under the name ts.
 
-data_availability_queue_empty = Event()
+data_availability_queue_empty = threading.Event()
 
 data_availability_queue = {}
 data_dicts = {} # array of dictionaries.
@@ -25,9 +25,9 @@ def data_structure_add(name, data_type, data_format):
     data_type_dict[name] = data_type
     data_format_dict[name] = data_format
     data_array[name] = []
-    data_dicts[name] = [{} for _ in range(512)]
+    data_dicts[name] = [{} for _ in range(4)]
     data_availability_queue[name] = queue.Queue()
-    for i in range(512):
+    for i in range(4):
         data_availability_queue[name].put(i)
 
 def data_dict_init(name) -> int:
@@ -52,21 +52,11 @@ def data_element_add_group(name, index, element_names, element_values):
 # please note that when you call this function, the data you've been logging MUST be complete (I.E. fully populated to match the data_type you assigned). If it's not, an error will be thrown.
 def data_report(name, index):
     data_log_queue.put((name, index))
-# logs/processes the next data element that's ready to be served up
-def data_log_next():
-
-    if data_log_queue.empty():
-        return
-    
-    name, index = data_log_queue.get()
-    
+# logs/processes the next data element
+def data_log(name, index):    
     data_array[name].append(data_dicts[name][index].copy())
-
     data_dict_kill(name, index)
 
-def data_log_force_process_all():
-    while not data_log_queue.empty():
-        data_log_next()
 def data_quick_write(name, element_names, element_values):
     index = data_dict_init(name)
     data_element_add_group(name, index, element_names, element_values)
@@ -98,6 +88,27 @@ def data_format(name):
     final_data: NDArray[np.void] = np.array(formatted_data, dtype=data_type)
 
     return {"data":final_data, "format":data_format, "header":data_header}
+
+def log_data_async():
+    while (True):
+
+        name, index = data_log_queue.get()
+
+        if index == -1:
+            break
+
+        data_log(name, index)
+
+
+data_log_thread = threading.Thread(target=log_data_async)
+
+def logging_start():
+    data_log_thread.start()
+
+def logging_end():
+    data_log_queue.put(("Exit", -1))
+    data_log_thread.join()
+
 
 ### example usage of the data tracker system below (please note this incorporates functions from both data_tracker.py AND data_saver.py):
 # data_structure_add("pos", [('x', 'f8'), ('y', 'f8'), ('z', 'f8')], ['%.16f', '%.16f', '%.16f'])
