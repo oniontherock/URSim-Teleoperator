@@ -1,6 +1,8 @@
 import data_loader
 
-data = data_loader.load_data("sampler6__2026_09_02__12h12m01s", 1)
+skip_count = 1000
+
+data = data_loader.load_data("PUT_FILE_NAME_HERE", skip_count)
 
 ts1 = data[3]
 
@@ -24,6 +26,6 @@ final_fps = 1000/avg
 print(
     "Data points: ", size, "\n",
     "Average FPS: ", final_fps, "\n",
-    "Min Diff: ", min(diff), " ", diff.index(min(diff)), "\n",
-    "Max Diff: ", max(diff), " ", diff.index(max(diff)), "\n"
+    "Min Diff: ", min(diff), " ", diff.index(min(diff))+skip_count, "\n",
+    "Max Diff: ", max(diff), " ", diff.index(max(diff))+skip_count, "\n"
     )
