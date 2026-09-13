@@ -68,7 +68,7 @@ data_tracker.data_structure_add(
 )
 
 data_tracker.data_structure_add(
-    "sampler1",
+    "tcp_sampler",
     [
         ('x', 'f8'),
         ('y', 'f8'),
@@ -82,85 +82,6 @@ data_tracker.data_structure_add(
         '%d',
     ]
 )
-data_tracker.data_structure_add(
-    "sampler2",
-    [
-        ('x', 'f8'),
-        ('y', 'f8'),
-        ('z', 'f8'),
-        ('t_write', 'i8'),
-    ],
-    [
-        '%.16f',
-        '%.16f',
-        '%.16f',
-        '%d',
-    ]
-)
-data_tracker.data_structure_add(
-    "sampler3",
-    [
-        ('x', 'f8'),
-        ('y', 'f8'),
-        ('z', 'f8'),
-        ('t_write', 'i8'),
-    ],
-    [
-        '%.16f',
-        '%.16f',
-        '%.16f',
-        '%d',
-    ]
-)
-data_tracker.data_structure_add(
-    "sampler4",
-    [
-        ('x', 'f8'),
-        ('y', 'f8'),
-        ('z', 'f8'),
-        ('t_write', 'i8'),
-    ],
-    [
-        '%.16f',
-        '%.16f',
-        '%.16f',
-        '%d',
-    ]
-)
-data_tracker.data_structure_add(
-    "sampler5",
-    [
-        ('x', 'f8'),
-        ('y', 'f8'),
-        ('z', 'f8'),
-        ('t_write', 'i8'),
-    ],
-    [
-        '%.16f',
-        '%.16f',
-        '%.16f',
-        '%d',
-    ]
-)
-data_tracker.data_structure_add(
-    "sampler6",
-    [
-        ('x', 'f8'),
-        ('y', 'f8'),
-        ('z', 'f8'),
-        ('t_write', 'i8'),
-    ],
-    [
-        '%.16f',
-        '%.16f',
-        '%.16f',
-        '%d',
-    ]
-)
-
-
-
-
 
 def data_save(name):
     data = data_tracker.data_format(name)
@@ -168,15 +89,10 @@ def data_save(name):
 
 def data_finalize():
 
-    data_save("sampler1")
-    data_save("sampler2")
-    data_save("sampler3")
-    data_save("sampler4")
-    data_save("sampler5")
-    data_save("sampler6")
+    data_save("tcp_sampler")
 
     # data_save("timestamps")
     # data_save("pre_filter_position")
     # data_save("post_filter_position")
-    # data_save("robot_tcp_position")
+    data_save("robot_tcp_position")
 

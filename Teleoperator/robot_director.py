@@ -27,8 +27,7 @@ def update_arm(robot_ip, stop_event:threading.Event):
         robot_ready.set()
         return
     try:
-        pass
-        # rtde_receive = RTDEReceiveInterface(robot_ip)
+        rtde_receive = RTDEReceiveInterface(robot_ip)
     except Exception as e:
         control_error = e
         robot_ready.set()
@@ -61,8 +60,8 @@ def update_arm(robot_ip, stop_event:threading.Event):
             # else:
             rtde.servoL(tcp_pose, 0.5, 0.5, 1.0/500, 0.03, 500)
 
-            # robot_tcp = rtde_receive.getActualTCPPose()
-            # data_tracker.data_quick_write("robot_tcp_position", ['x', 'y', 'z', 't_write'], [robot_tcp[0], robot_tcp[1], robot_tcp[2], (time.perf_counter_ns() // 1000000) - t0])
+            robot_tcp = rtde_receive.getActualTCPPose()
+            data_tracker.data_quick_write("robot_tcp_position", ['x', 'y', 'z', 't_write'], [robot_tcp[0], robot_tcp[1], robot_tcp[2], (time.perf_counter_ns() // 1000000) - t0])
 
 
             rtde.waitPeriod(start_time)
