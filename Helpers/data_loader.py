@@ -17,7 +17,7 @@ def data_convert_to_dict(data, timestamp_index=-1):
     data_as_dict = {}
 
     for i in range(len(data)):
-        data_as_dict[round(data[i][timestamp_index])] = [data[i][0]]
+        data_as_dict[round(data[i][timestamp_index])] = [data[i]]
 
     return data_as_dict
 
