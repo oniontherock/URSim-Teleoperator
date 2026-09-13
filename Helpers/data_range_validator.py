@@ -1,36 +1,63 @@
 import data_loader
-import numpy as np
-import bisect
+import point_distance_checker
+
 
 def bumpy(name_1,name_2):
 
-    data_1 = data_loader.data_load_as_dict(name_1, 1)
-    data_2 = data_loader.data_load_as_dict(name_2, 1)
+    data_1 = data_loader.data_load_as_dict(name_1, -1)
+    data_2 = data_loader.data_load_as_dict(name_2, -1)
 
-    bad_timestamps = 0
+    all_dists = []
 
-    sorted_data_2 = sorted(data_2.keys())
+    for timestamp in data_1:
 
-    for i in data_1:
-
-        ind_i = bisect.bisect_left(sorted_data_2, i)
-
-        closest_lower_i = sorted_data_2[ind_i-1] if ind_i >  0 else 0
-        closest_higher_i = sorted_data_2[ind_i] if ind_i < len(sorted_data_2) else 0
-
-        if closest_lower_i <= 0 or closest_higher_i <= 0:
+        if not timestamp in data_2:
             continue
 
-        neighbors_like_me = 0
+        def get_from_data(ts1, ts2):
+            return point_distance_checker.dist_get(
+                data_1[ts1][0][0],
+                data_1[ts1][0][1],
+                data_1[ts1][0][2],
+                data_2[ts2][0][0],
+                data_2[ts2][0][1],
+                data_2[ts2][0][2]
+                )
 
-        if data_2[closest_lower_i] == data_1[i]:
-            neighbors_like_me += 1
-        if data_2[closest_higher_i] == data_1[i]:
-            neighbors_like_me += 1
+        if (timestamp-1) in data_2:
+            all_dists.append(get_from_data(timestamp, timestamp-1))
+        if (timestamp+1) in data_2:
+            all_dists.append(get_from_data(timestamp, timestamp+1))
+        if (timestamp) in data_2:
+            all_dists.append(get_from_data(timestamp, timestamp))
+        
 
-        if neighbors_like_me <= 0:
-            bad_timestamps += 1
+    print(
+        f"Data count = {len(all_dists)}\n",
+        f"Max dist = {max(all_dists)}\n",
+        f"Min dist = {min(all_dists)}\n"
+        )
+    return(
+        len(all_dists),
+        max(all_dists),
+        min(all_dists)
+          )
 
-    print(f"Bad timestamps = {bad_timestamps}")
+data_len_full = 0
+dist_max_full = -99999999
+dist_min_full = 999999999
 
-bumpy("sampler2__2026_09_07__10h05m25s", "sampler1__2026_09_07__10h05m25s")
+for i in range(1, 13):
+    data_len, dist_max, dist_min, = bumpy(f"tcp_sampler_{i}", f"robot_tcp_position_{i}")
+    data_len_full += data_len
+
+    if (dist_max > dist_max_full):
+        dist_max_full = dist_max
+    if (dist_min < dist_min_full):
+        dist_min_full = dist_min
+        
+print(
+    f"Final data count = {data_len_full}\n",
+    f"final max dist = {dist_max_full}\n",
+    f"Final min dist = {dist_min_full}\n"
+    )
