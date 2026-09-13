@@ -1,4 +1,5 @@
 import math
+import queue
 
 class Filter:
     def __init__(self):
@@ -12,7 +13,7 @@ class Filter:
         self.timestamp_last = timestamp
         return val
 
-
+# this is for now a placeholder filter that just shows our filtering system actually does anything
 class LowPass(Filter):
 
     def __init__(self, cutoff):
@@ -45,3 +46,32 @@ class LowPass(Filter):
         self.val_filtered_prev = val_filtered
 
         return val_filtered
+
+class MovingAverage(Filter):
+
+    def __init__(self, look_back_size):
+        self.timestamp_last = 0 # an absolute value in time, not a difference, just the last time that the filter was called
+        self.points_last = queue.Queue() # array of last few points. Used for the moving average.
+        self.look_back_size = look_back_size # the amount of points that the moving average will look back
+    
+    def filter_value(self, val:tuple, timestamp) -> tuple:
+
+        dt = timestamp - self.timestamp_last
+        self.timestamp_last = timestamp
+
+
+        self.points_last.put_nowait(val)
+        if (self.points_last.qsize() > self.look_back_size):
+            self.points_last.get_nowait()
+
+        averaged_val = (0, 0, 0)
+
+        queue_elements = list(self.points_last.queue)
+        queue_elements_len = len(queue_elements)
+
+        for cur_past_point in queue_elements:
+            averaged_val = tuple(summing_point_val + past_point_val for summing_point_val, past_point_val in zip(averaged_val, cur_past_point))
+
+        averaged_val = tuple(summing_point_val / queue_elements_len for summing_point_val in averaged_val)
+
+        return averaged_val
